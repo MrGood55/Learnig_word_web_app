@@ -2,7 +2,7 @@ from django import forms
 from .models import ModelWords
 
 FORMAT_CHOICES = {
-    ('xls','xls'),
+    ('xlsx','xlsx'),
     ('csv','csv'),
     ('json','json')
 }

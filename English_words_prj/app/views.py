@@ -1,21 +1,21 @@
+import csv
+
 from django.shortcuts import render,redirect
 from .forms import *
 from .models import *
-# from .resources import *
-from .admin import WordsResources
-from django.urls import reverse_lazy
 
 from django.views import View
 from django.views.generic.base import TemplateView
 from django.views.generic import ListView,FormView
 from django.http import HttpResponseRedirect,HttpResponse,HttpResponseNotFound, JsonResponse
-# from django.core.paginator import Paginator
+
 from django.contrib import messages
 import random
 
 ## For import/export
 from tablib import Dataset
-import pandas as pd
+import json
+from openpyxl import Workbook
 
 ### Create your views here.
 
@@ -37,19 +37,6 @@ class WordsFormView(View):
 
         return render(request,'app/appendwords.html',context={'form':form})
 
-# class CheckWordsFormView(View):
-#     def get(self,request):
-#         form = CheckWordsFrom()
-#         words = ModelWords.objects.all()
-#         return render(request,'app/checkwords.html',context={'form':form,'words':words})
-#     def post(self,request):
-#         form = WordsFrom(request.POST)
-#         if form.is_valid():
-#
-#             messages.success(request, "Проверим!",fail_silently=True)
-#             return HttpResponseRedirect('appendwords')
-#
-#         return render(request,'app/checkwords.html',context={'form':form})
 
 def check_eng_words(request):
     # words = ModelWords.objects.values_list() #'eng_name'
@@ -89,34 +76,47 @@ class ListWords(ListView,FormView):
     context_object_name = 'list_of_words'
     def post(self, request, **kwargs):
         qs = self.get_queryset()
-        dataset = Dataset()
-        # print('qs is ',qs)
-        # dataset = WordsResources().export(queryset=qs)
-        # dataset = WordsResources().export()
-
-
-        # print('dataset is ',dataset.csv)
+        # dataset = Dataset()
 
         format =  request.POST.get('format')
+        if format == 'xlsx':
+            response = HttpResponse(content_type=f'{format}')
+            response['Content-Disposition'] = 'attachment; filename="products.xlsx"'
 
-        dataset = dataset.load(qs, format=format)
-        for num, i in enumerate(dataset):
-            print(num, i)
+            wb = Workbook()
+            ws = wb.active
+            ws.title = "Words"
 
-        if format == 'xls':
-            # ds = dataset.xls
-            ds = dataset.load(qs, format=format)
+            # Add headers
+            headers = ['Russian','English']
+            ws.append(headers)
+            # Add data from the model
+            for item in qs:
+                ws.append([item.rus_name,item.eng_name])
+            # Save the workbook to the HttpResponse
+            wb.save(response)
+            return response
+
         elif format == 'csv':
-            # ds = dataset.csv
-            ds = dataset.load(qs, format=format)
-
+            response = HttpResponse(content_type=f'{format}')
+            data =  csv.writer(response)
+            data.writerow(['Russian','English'])
+            data.writerows(qs.values_list('rus_name','eng_name'))
+            response['Content-Disposition'] = f'attachment; filename=words.{format}'
+            return response
+        elif format == 'json':
+            json_data = json.dumps(list(qs.values('rus_name','eng_name')),ensure_ascii=False)
+            response = HttpResponse(json_data,content_type=f'{format}')
+            response['Content-Disposition'] = f'attachment; filename=words.{format}'
+            return response
+            # return HttpResponse(data, content_type='application/json')
         else:
-            # ds = dataset.json
-            ds = dataset.load(qs, format=format)
+            pass
 
-        response = HttpResponse(ds, content_type=f'{format}')
-        response['Content-Disposition'] = f'attachment; filename=posts.{format}'
-        return response
+
+
+
+
 
     def get_queryset(self):
         return ModelWords.objects.order_by('id')
@@ -156,44 +156,48 @@ def pageNotFound(request, exception):
 
 import time
 
-# class SimpleExportWithResouces(ListView,FormView):
-#     model = ModelWords
-#     template_name = 'app/list.html'
-#     form_class = FormatExportForm
-#     def post(self, request, **kwargs):
-#         qs = self.get_queryset()
-#         dataset = WordsResources().export(qs)
-#
-#         format =  request.POST.get('format')
-#         if format == 'xls':
-#             ds = dataset.xls
-#         elif format == 'csv':
-#             ds = dataset.csv
-#         else:
-#             ds = dataset.json
-#         response = HttpResponse(ds, content_type=f'{format}')
-#         response['Content-Disposition'] = f'attachment; filename=posts.{format}'
-#         return response
+
 def simple_export(request):
     try:
-        start = time.time() #################################
         objs = ModelWords.objects.all()
-        data = []
-        for obj in objs:
-            data.append({
-                'rus_name': obj.rus_name,
-                'eng_name': obj.rus_name,
-                'cat': obj.cat
-            })
-            pd.DataFrame(data).to_excel('output.xlsx')
-        end = time.time()
-        print(end - start)
+        # dataset = Dataset()
+        format = request.POST.get('format')
+        if format == 'xlsx':
+            response = HttpResponse(content_type=f'{format}')
+            response['Content-Disposition'] = 'attachment; filename="products.xlsx"'
+
+            wb = Workbook()
+            ws = wb.active
+            ws.title = "Words"
+
+            # Add headers
+            headers = ['Russian', 'English']
+            ws.append(headers)
+            # Add data from the model
+            for item in objs:
+                ws.append([item.rus_name, item.eng_name])
+            # Save the workbook to the HttpResponse
+            wb.save(response)
+            return response
+
+        elif format == 'csv':
+            response = HttpResponse(content_type=f'{format}')
+            data = csv.writer(response)
+            data.writerow(['Russian', 'English'])
+            data.writerows(objs.values_list('rus_name', 'eng_name'))
+            response['Content-Disposition'] = f'attachment; filename=words.{format}'
+            return response
+        elif format == 'json':
+            json_data = json.dumps(list(objs.values('rus_name', 'eng_name')), ensure_ascii=False)
+            response = HttpResponse(json_data, content_type=f'{format}')
+            response['Content-Disposition'] = f'attachment; filename=words.{format}'
+            return response
+            # return HttpResponse(data, content_type='application/json')
+        else:
+            pass
     except:
-        messages.success(request, 'Data is downloaded')  # MESSAGE
-    # return redirect('list')
-    return JsonResponse({
-        'status' : 200
-    })
+        messages.success(request, 'Data is not downloaded')  # MESSAGE
+
 def simple_upload(request):
     try:
         if request.method == 'POST':

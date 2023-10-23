@@ -8,78 +8,6 @@
     <title>Title</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
     <link rel="stylesheet" href="{% static 'app/alerts.css' %}">
-    <style>
-<!--    .alert {-->
-<!--  position: relative;-->
-<!--  top: 10;-->
-<!--  left: 0;-->
-<!--  width: auto;-->
-<!--  height: auto;-->
-<!--  padding: 10px;-->
-<!--  margin: 10px;-->
-<!--  line-height: 1.8;-->
-<!--  border-radius: 5px;-->
-<!--  cursor: hand;-->
-<!--  cursor: pointer;-->
-<!--  font-family: sans-serif;-->
-<!--  font-weight: 400;-->
-<!--}-->
-
-<!--.alertCheckbox {-->
-<!--  display: none;-->
-<!--}-->
-
-<!--:checked + .alert {-->
-<!--  display: none;-->
-<!--}-->
-
-<!--.alertText {-->
-<!--  display: table;-->
-<!--  margin: 0 auto;-->
-<!--  text-align: center;-->
-<!--  font-size: 16px;-->
-<!--}-->
-
-<!--.alertClose {-->
-<!--  float: right;-->
-<!--  padding-top: 5px;-->
-<!--  font-size: 10px;-->
-<!--}-->
-
-<!--.clear {-->
-<!--  clear: both;-->
-<!--}-->
-
-<!--.info {-->
-<!--  background-color: #EEE;-->
-<!--  border: 1px solid #DDD;-->
-<!--  color: #999;-->
-<!--}-->
-
-<!--.success {-->
-<!--  background-color: #EFE;-->
-<!--  border: 1px solid #DED;-->
-<!--  color: #9A9;-->
-<!--}-->
-
-<!--.notice {-->
-<!--  background-color: #EFF;-->
-<!--  border: 1px solid #DEE;-->
-<!--  color: #9AA;-->
-<!--}-->
-
-<!--.warning {-->
-<!--  background-color: #FDF7DF;-->
-<!--  border: 1px solid #FEEC6F;-->
-<!--  color: #C9971C;-->
-<!--}-->
-
-<!--    .error {-->
-<!--      background-color: #FEE;-->
-<!--      border: 1px solid #EDD;-->
-<!--      color: #A66;-->
-<!--    }-->
-    </style>
 </head>
 <body>
 
@@ -101,29 +29,15 @@
         <a class="nav-link"  href="{% url 'import_words' %}">Импортировать слова</a>
       </li>
 
-      <li class="nav-item flex-sm-fill text-sm-center p-2">
-        <a class="nav-link"  href="{% url 'export_words' %}">Экспортировать слова</a>
-      </li>
+      {% block li_for_menu %} {% endblock %}
     </ul>
   </div><!--END MENU -->
-<!--  <div>-->
-<!--    <ul>-->
-
-<!--      {% for c in cats %}-->
-<!--          {% if c.pk == cat_selected %}-->
-<!--              <li class="selected">{{c.name}}</li>-->
-<!--          {% else %}-->
-<!--              <li><a href="{{ c.get_absolute_url }}"> {{c.name}}</a></li>-->
-<!--          {% endif %}-->
-<!--      {% endfor %}-->
-<!--    </ul>-->
-<!--  </div>-->
 
 
 
   <div class="container ">
 
-      {% for message in messages %}
+      {% for message in messages %}  <!--START ALERTS-->
           {% if message.level == DEFAULT_MESSAGE_LEVELS.SUCCESS  %}
             <div class="alert alert-success d-flex flex-column align-items-center m-2" role="alert">
               <h3>{{message}}</h3>
@@ -134,50 +48,18 @@
                 <h3>{{message}}</h3>
             </div>
         {% endif %}
-    {% endfor%}
+    {% endfor%}  <!--END ALERTS-->
 
 
-    {% block content %}{% endblock %}
+    {% block content %}{% endblock %}<!--MAIN CONTENT-->
   </div>
 
 
-<nav class="list-pages">
-    <ul>
-{% if page_obj.has_previous %}
-<li class="page-num">
-	<a href="?page={{ page_obj.previous_page_number }}">&lt;</a>
-</li>
-{% endif %}
-
-        {% for p in paginator.page_range %}
-		{% if page_obj.number == p %}
-        <li class="page-num page-num-selected">{{ p }}</li>
-		{% elif p >= page_obj.number|add:-2 and p <= page_obj.number|add:2  %}
-        <li class="page-num">
-            <a href="?page={{ p }}">{{ p }}</a>
-        </li>
-		{% endif %}
-        {% endfor %}
-
-{% if page_obj.has_next %}
-<li class="page-num">
-	<a href="?page={{ page_obj.next_page_number }}">&gt;</a>
-</li>
-{% endif %}
-
-    </ul>
-</nav>
 
 
-<!--<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>-->
-<!--<script>-->
-<!--    {% if messages  %}-->
-<!--        {% for message in messages %}-->
-<!--&lt;!&ndash;            Swal.fire('{{message}}')&ndash;&gt;-->
-<!--            alert('{{message}}');-->
-<!--        {% endfor%}-->
-<!--    {% endif %}-->
-<!--</script>-->
+
+
+
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
 </body>

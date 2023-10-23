@@ -2,26 +2,34 @@
 
 
 
+{% block li_for_menu %}
+    <li class="nav-item flex-sm-fill text-sm-center p-2"> <!--    Start    Trigger Modal-->
+        <a class="nav-link" data-bs-toggle="modal" href="#download-modal" role="button" aria-expanded="false" aria-controls="download-modal">
+        Экспортировать слова
+        </a>
+    </li><!--    END    Trigger Modal-->
+{% endblock %}
+
+
+
 {% block content %}
+        <div class="container   w-100 "><!--START CATEGORIES -->
+            <ul class="list-inline d-flex flex-wrap justify-content-center mt-3">
 
-    <div> <!--START Categories-->
-        <ul>
-          {% for c in cats %}
-              {% if c.pk == cat_selected %}
-                  <li class="selected">{{c.name}}</li>
-              {% else %}
-                  <li><a href="{{ c.get_absolute_url }}"> {{c.name}}</a></li>
-              {% endif %}
-          {% endfor %}
-        </ul>
-    </div> <!--END Categories-->
+              {% for c in cats %}
+                  {% if c.pk == cat_selected %}
+                      <li class="list-inline-item">{{c.name}}</li>|
+                  {% else %}
+                    {% if forloop.last %}
+                        <li class="list-inline-item p-2 border rounded-pill "><a href="{{ c.get_absolute_url }}"> {{c.name}}</a></li>
+                    {% else %}
+                        <li class="list-inline-item p-2 border rounded-pill"><a href="{{ c.get_absolute_url }}"> {{c.name}}</a></li>
+                    {% endif %}
 
-    <h1>List</h1>
-
-<!--    Start    Trigger Modal-->
-    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#download-modal" aria-expanded="false" aria-controls="download-modal">
-        download
-    </button>
+                  {% endif %}
+              {% endfor %}
+            </ul>
+        </div><!--END CATEGORIES -->
 
 
 
@@ -34,7 +42,7 @@
                 </div>
                 <div class="modal-body">
 
-                    <form action="" method="post" enctype="multipart/form-data">
+                    <form action="{% url 'export_words' %}" method="post" enctype="multipart/form-data">
                         {% csrf_token %}
                         {{form.as_p}}
                         <button type="submit" class="btn btn-primary">save</button>
@@ -44,6 +52,7 @@
         </div>
     </div><!--End    MODAL -->
 
+    <h1>List</h1>
 
     <ul> <!--START list_of_words-->
         {% for word in list_of_words %}
@@ -60,4 +69,31 @@
     </ul> <!--END list_of_words-->
 
 
+
+
+    <nav class="container w-100 "> <!--START WORDS_PAGINATION-->
+        <ul class="list-inline d-flex justify-content-center mt-3 ">
+            {% if page_obj.has_previous %}
+            <li class="list-inline-item border rounded p-2">
+                <a href="?page={{ page_obj.previous_page_number }}">&lt;</a>
+            </li>
+            {% endif %}
+
+            {% for p in paginator.page_range %}
+            {% if page_obj.number == p %}
+            <li class="list-inline-item border rounded p-2">{{ p }}</li>
+            {% elif p >= page_obj.number|add:-2 and p <= page_obj.number|add:2  %}
+            <li class="list-inline-item border rounded p-2">
+                <a href="?page={{ p }}">{{ p }}</a>
+            </li>
+            {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+            <li class="list-inline-item border rounded p-2">
+                <a href="?page={{ page_obj.next_page_number }}">&gt;</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav><!--END WORDS_PAGINATION-->
 {% endblock %}
