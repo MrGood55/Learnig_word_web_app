@@ -1,0 +1,40 @@
+{% extends 'app/base.html' %}
+
+
+
+{% block content %}
+<!--    <div>-->
+<!--        <ul>-->
+<!--          {% for c in cats %}-->
+<!--              {% if c.pk == cat_selected %}-->
+<!--                  <li class="selected">{{c.name}}</li>-->
+<!--              {% else %}-->
+<!--                  <li><a href="{{ c.get_absolute_url }}"> {{c.name}}</a></li>-->
+<!--              {% endif %}-->
+<!--          {% endfor %}-->
+<!--        </ul>-->
+<!--    </div>-->
+
+    <div class="container w-100 d-flex flex-column align-items-center mt-3">
+        <h3 class=" d-flex justify-content-center border border-primary rounded shadow-lg w-50 p-3">Проверь Себя!</h3>
+
+        <form action="{% url 'checkwords' %}" method="post" class="d-flex flex-column align-items-center  border border-primary rounded shadow-lg p-5 w-50">
+             {% csrf_token %}
+            <div class="d-flex flex-column align-items-center m-2">
+                <h5>Дайте перевод:</h5>
+                <h2>"{{word.rus_name}}"</h2>
+            </div>
+
+             {{form}}
+             <button type="submit" class="btn btn-outline-primary p-3 mt-1 w-50">Проверить</button>
+        </form>
+
+        <h3 class="d-flex justify-content-center border  rounded shadow-lg  bg-success text-light mt-1 w-50 p-3 ">{{word.eng_name}} - Ответ </h3>
+    </div>
+
+
+
+
+
+
+{% endblock %}

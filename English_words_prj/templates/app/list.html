@@ -1,0 +1,63 @@
+{% extends 'app/base.html' %}
+
+
+
+{% block content %}
+
+    <div> <!--START Categories-->
+        <ul>
+          {% for c in cats %}
+              {% if c.pk == cat_selected %}
+                  <li class="selected">{{c.name}}</li>
+              {% else %}
+                  <li><a href="{{ c.get_absolute_url }}"> {{c.name}}</a></li>
+              {% endif %}
+          {% endfor %}
+        </ul>
+    </div> <!--END Categories-->
+
+    <h1>List</h1>
+
+<!--    Start    Trigger Modal-->
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#download-modal" aria-expanded="false" aria-controls="download-modal">
+        download
+    </button>
+
+
+
+    <div class="modal fade" id="download-modal" tabindex="-1"> <!--Start    MODAL -->
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Download words</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+
+                    <form action="" method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        {{form.as_p}}
+                        <button type="submit" class="btn btn-primary">save</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div><!--End    MODAL -->
+
+
+    <ul> <!--START list_of_words-->
+        {% for word in list_of_words %}
+        <li>
+            <span>
+                {{word.categorie}} - {{word.rus_name}} - {{word.eng_name}}
+                <button class="btn btn-outline-danger" >
+                  <a  style="color: red;  text-decoration: none;" href="{% url 'delete' id_word=word.id %}">Удалить</a>
+                </button>
+            </span>
+        </li>
+
+        {% endfor %}
+    </ul> <!--END list_of_words-->
+
+
+{% endblock %}
