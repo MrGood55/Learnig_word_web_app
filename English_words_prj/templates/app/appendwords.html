@@ -20,7 +20,14 @@
           {{field}}
         </div>
         {% endfor %}
-        <button type="submit">Создать</button>
+        {% if request.user.is_authenticated %}
+        <button class="btn btn-primary" type="submit">Создать</button>
+        {% else %}
+        <a class="btn btn-primary"   data-bs-toggle="modal" href="#check-modal" role="button" aria-expanded="false" aria-controls="check-modal">
+            Создать
+        </a>
+<!--        <p class="btn btn-primary">Создать</p>-->
+        {% endif %}
     </form>
 
 

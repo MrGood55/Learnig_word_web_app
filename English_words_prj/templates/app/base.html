@@ -24,16 +24,38 @@
       <li class="nav-item flex-sm-fill text-sm-center p-2">
         <a class="nav-link"  href="{% url 'appendwords' %}">Добавить слово</a>
       </li>
-
+    {% if request.user.is_authenticated %}
       <li class="nav-item flex-sm-fill text-sm-center p-2">
         <a class="nav-link"  href="{% url 'import_words' %}">Импортировать слова</a>
       </li>
-
+    {% else %}
+        <li class="nav-item flex-sm-fill text-sm-center p-2">
+            <a class="nav-link"   data-bs-toggle="modal" href="#check-modal" role="button" aria-expanded="false" aria-controls="check-modal">Импортировать слова</a>
+        </li>
+    {% endif %}
       {% block li_for_menu %} {% endblock %}
+
+
+            <ul class="list-inline nav-item flex-sm-fill text-sm-center p-2 ">
+        {% if request.user.is_authenticated %}
+                <li class="list-inline-item"> {{user.username}} | <a href="{% url 'logout' %}">Выйти</a></li>
+        {% else %}
+                <li class="list-inline-item"><a href="{% url 'register' %}">Регистрация</a> | <a href="{% url 'login' %}">Войти</a></li>
+        {% endif %}
+            </ul>
     </ul>
   </div><!--END MENU -->
 
-
+<div class="modal fade" id="check-modal" tabindex="-1"> <!--Start    modal For Nonauthorized  Users -->
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title ">Please login to get access</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+            </div>
+        </div>
+    </div><!--End    modal For Nonauthorized  Users -->
 
   <div class="container ">
 
