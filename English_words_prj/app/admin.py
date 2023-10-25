@@ -15,8 +15,10 @@ class WordsResources(resources.ModelResource):
 # Register your models here.
 
 # admin.site.register(ModelWords)
-admin.site.register(ModelCatsWords)
-
+# admin.site.register(ModelCatsWords)
+@admin.register(ModelCatsWords)
+class PersonAdmin(ImportExportModelAdmin):
+    list_display = ('name','author')
 @admin.register(ModelWords)
 class PersonAdmin(ImportExportModelAdmin):
-    list_display = ('rus_name', 'eng_name','cat')
+    list_display = ('rus_name', 'eng_name','cat','author')

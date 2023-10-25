@@ -23,34 +23,58 @@ from openpyxl import Workbook
 from django.contrib.auth import logout, login
 from django.contrib.auth.views import LoginView
 from django.urls import reverse_lazy
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 ### Create your views here.
 
 def index(requset):
     return render(requset,'app/index.html')
 
+
+
+
 class WordsFormView(View):
+
     def get(self,request):
-        form = WordsFrom()
 
-        return render(request,'app/appendwords.html',context={'form':form})
+        form_for_word = WordsFrom()
+
+
+        form_for_categorie = ModelCatsWordsForm()
+
+        return render(request,'app/appendwords.html',context={'form':form_for_word,'form_for_categorie':form_for_categorie})
     def post(self,request):
-        form = WordsFrom(request.POST)
-        if form.is_valid():
-            form.save()
 
-            messages.info(request, "Задача создана!",fail_silently=True)
-            return HttpResponseRedirect('appendwords')
-
-        return render(request,'app/appendwords.html',context={'form':form})
+        if self.request.POST.get('form-type') == 'form_for_word':
+            form_for_word = WordsFrom(request.POST)
+            if form_for_word.is_valid():
+                word_form = form_for_word.save(commit=False)
+                # word_form.author = User.objects.get(user=request.user.username)
+                word_form.author = User.objects.get(username=request.user.username)
+                word_form.save()
+                messages.info(request, "Слово создано!",fail_silently=True)
+                return HttpResponseRedirect('appendwords')
+            return render(request,'app/appendwords.html',context={'form':form_for_word})
+        elif self.request.POST.get('form-type') == 'form_for_categorie':
+            form_for_categorie = ModelCatsWordsForm(request.POST)
+            if form_for_categorie.is_valid():
+                word_form = form_for_categorie.save(commit=False)
+                # word_form.author = User.objects.get(user=request.user.username)
+                word_form.author = User.objects.get(username=request.user.username)
+                word_form.save()
+                messages.info(request, "Категория создана!", fail_silently=True)
+                return HttpResponseRedirect('appendwords')
+            return render(request, 'app/appendwords.html', context={'form_for_categorie': form_for_categorie})
 
 
 def check_eng_words(request):
     # words = ModelWords.objects.values_list() #'eng_name'
     # words = ModelWords.objects.filter(cat_id=1) # between all objects by 'cat_id'
     # words = ModelWords.objects.get(id=1) #  one object from group by 'id'
-
-    words = ModelWords.objects.all()
-    print(len(words))
+    if request.user.is_authenticated:
+        words = ModelWords.objects.filter(author=request.user.id)
+    else:
+        words = []
     if len(words) == 0:
         return render(request,'app/error/havenotwords.html')
     random_word = random.choice(words)
@@ -67,6 +91,7 @@ def check_eng_words(request):
                 messages.info(request, "Wrong", fail_silently=True)
     else:
         form = CheckWordsFrom()
+
     return render(request,'app/checkwords.html',{'form':form,'word':word})
 
 
@@ -80,56 +105,17 @@ class ListWords(ListView,FormView):
     form_class = FormatExportForm
     paginate_by = 10
     context_object_name = 'list_of_words'
-    # def post(self, request, **kwargs):
-    #     qs = self.get_queryset()
-    #     # dataset = Dataset()
-    #
-    #     format =  request.POST.get('format')
-    #     if format == 'xlsx':
-    #         response = HttpResponse(content_type=f'{format}')
-    #         response['Content-Disposition'] = 'attachment; filename="products.xlsx"'
-    #
-    #         wb = Workbook()
-    #         ws = wb.active
-    #         ws.title = "Words"
-    #
-    #         # Add headers
-    #         headers = ['Russian','English']
-    #         ws.append(headers)
-    #         # Add data from the model
-    #         for item in qs:
-    #             ws.append([item.rus_name,item.eng_name])
-    #         # Save the workbook to the HttpResponse
-    #         wb.save(response)
-    #         return response
-    #
-    #     elif format == 'csv':
-    #         response = HttpResponse(content_type=f'{format}')
-    #         data =  csv.writer(response)
-    #         data.writerow(['Russian','English'])
-    #         data.writerows(qs.values_list('rus_name','eng_name'))
-    #         response['Content-Disposition'] = f'attachment; filename=words.{format}'
-    #         return response
-    #     elif format == 'json':
-    #         json_data = json.dumps(list(qs.values('rus_name','eng_name')),ensure_ascii=False)
-    #         response = HttpResponse(json_data,content_type=f'{format}')
-    #         response['Content-Disposition'] = f'attachment; filename=words.{format}'
-    #         return response
-    #         # return HttpResponse(data, content_type='application/json')
-    #     else:
-    #         pass
-
-
-
-
-
 
     def get_queryset(self):
-        return ModelWords.objects.order_by('id')
+        # return ModelWords.objects.order_by('-id')
+        return ModelWords.objects.filter(author=self.request.user.id)
+
+
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['cats'] = ModelCatsWords.objects.all()
+        # context['cats'] = ModelCatsWords.objects.all()
+        context['cats'] = ModelCatsWords.objects.filter(author=self.request.user.id)
         return context
 
 

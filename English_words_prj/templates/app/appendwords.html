@@ -8,28 +8,48 @@
 
 
 
+    <div>
+        <form method="post"> <!--form_for_word-->
+            {% csrf_token %}
+            <input type="hidden" name="form-type" value="form_for_word">
+            {% for field in form %}
+            <div class="">
+              {{field.label_tag}}
 
-    <form method="post">
-        {% csrf_token %}
+              <div class="w-100">{{field.errors}}</div>
+              {{field}}
+            </div>
+            {% endfor %}
+            {% if request.user.is_authenticated %}
+            <button class="btn btn-primary" type="submit">Создать</button>
+            {% else %}
+            <a class="btn btn-primary"   data-bs-toggle="modal" href="#check-modal" role="button" aria-expanded="false" aria-controls="check-modal">
+                Создать
+            </a>
+    <!--        <p class="btn btn-primary">Создать</p>-->
+            {% endif %}
+        </form>
 
-        {% for field in form %}
-        <div class="">
-          {{field.label_tag}}
+        <form method="post"><!--    form_for_categorie-->
+            {% csrf_token %}
+            <input type="hidden" name="form-type" value="form_for_categorie">
+            {% for field in form_for_categorie %}
+            <div class="">
+              {{field.label_tag}}
 
-          <div class="w-100">{{field.errors}}</div>
-          {{field}}
-        </div>
-        {% endfor %}
-        {% if request.user.is_authenticated %}
-        <button class="btn btn-primary" type="submit">Создать</button>
-        {% else %}
-        <a class="btn btn-primary"   data-bs-toggle="modal" href="#check-modal" role="button" aria-expanded="false" aria-controls="check-modal">
-            Создать
-        </a>
-<!--        <p class="btn btn-primary">Создать</p>-->
-        {% endif %}
-    </form>
+              <div class="w-100">{{field.errors}}</div>
+              {{field}}
+            </div>
+            {% endfor %}
+            {% if request.user.is_authenticated %}
+            <button class="btn btn-primary" type="submit">Создать</button>
+            {% else %}
+            <a class="btn btn-primary"   data-bs-toggle="modal" href="#check-modal" role="button" aria-expanded="false" aria-controls="check-modal">
+                Создать
+            </a>
+    <!--        <p class="btn btn-primary">Создать</p>-->
+            {% endif %}
+        </form>
 
-
-
+    </div>
     {% endblock %}
