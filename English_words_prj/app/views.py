@@ -37,7 +37,8 @@ class WordsFormView(View):
 
     def get(self,request):
 
-        form_for_word = WordsFrom()
+        form_for_word = WordsFrom(request.GET,request=request)
+        # form_for_word = WordsFrom()
 
 
         form_for_categorie = ModelCatsWordsForm()
@@ -49,7 +50,6 @@ class WordsFormView(View):
             form_for_word = WordsFrom(request.POST)
             if form_for_word.is_valid():
                 word_form = form_for_word.save(commit=False)
-                # word_form.author = User.objects.get(user=request.user.username)
                 word_form.author = User.objects.get(username=request.user.username)
                 word_form.save()
                 messages.info(request, "Слово создано!",fail_silently=True)
