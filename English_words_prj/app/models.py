@@ -9,9 +9,11 @@ from django.contrib.auth.models import User
 
 
 class ModelWords(models.Model):
+
     class Meta:
         verbose_name = 'Words'
         verbose_name_plural = 'Words'
+
     rus_name = models.CharField(max_length=40)#,default='Слово'
     eng_name = models.CharField(max_length=40)#,default='Word'd
     cat = models.ForeignKey('ModelCatsWords', on_delete=models.CASCADE, null=True)

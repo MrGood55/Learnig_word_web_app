@@ -10,28 +10,31 @@ FORMAT_CHOICES = {
     ('json','json')
 }
 class WordsFrom(forms.ModelForm):
-    cat = forms.ChoiceField(choices=[], required=False, label="select cat")
+    # cat =
     def __init__(self, *args, **kwargs):
-        self.request = kwargs.pop('request', None)
-        super(WordsFrom, self).__init__(*args, **kwargs)
-        # self.fields['cat'].choices = [self.request.user.id]
-        # self.fields['cat'].choices = ModelCatsWords.objects.filter(author=args.user.id).values_list('name')
-        # ModelWords.objects.filter(cat_id=self.kwargs['cat_id'])
+        # author = kwargs.pop('user')
+
+        super().__init__(*args, **kwargs)
+        # self.fields['lists'].queryset = List.objects.filter(user=user)
+
         for visible in self.visible_fields():
             visible.field.widget.attrs['placeholder'] = visible.field.label
     class Meta:
         model = ModelWords
+        # fields =  '__all__'
         fields =  ['rus_name', 'eng_name','cat'] #'__all__'
+        # exclude =  ['rus_name', 'eng_name','cat'] #'__all__'
         labels = {
             'categorie' : 'Раздел',
             'rus_name' : 'Слово на русском',
             'eng_name' : 'Слово на английском',
-            # 'cat' : 'Категория'
+            'cat' : 'Категория'
         }
 class ModelCatsWordsForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['name'].widget.attrs['placeholder'] = 'Категория'
+
     class Meta:
         model = ModelCatsWords
         fields = ['name']
