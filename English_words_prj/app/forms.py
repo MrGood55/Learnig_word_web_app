@@ -10,13 +10,20 @@ FORMAT_CHOICES = {
     ('json','json')
 }
 class WordsFrom(forms.ModelForm):
+    # cat =
     def __init__(self, *args, **kwargs):
+        # author = kwargs.pop('user')
+
         super().__init__(*args, **kwargs)
+        # self.fields['lists'].queryset = List.objects.filter(user=user)
+
         for visible in self.visible_fields():
             visible.field.widget.attrs['placeholder'] = visible.field.label
     class Meta:
         model = ModelWords
+        # fields =  '__all__'
         fields =  ['rus_name', 'eng_name','cat'] #'__all__'
+        # exclude =  ['rus_name', 'eng_name','cat'] #'__all__'
         labels = {
             'categorie' : 'Раздел',
             'rus_name' : 'Слово на русском',
@@ -27,6 +34,7 @@ class ModelCatsWordsForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['name'].widget.attrs['placeholder'] = 'Категория'
+
     class Meta:
         model = ModelCatsWords
         fields = ['name']

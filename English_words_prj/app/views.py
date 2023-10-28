@@ -8,7 +8,7 @@ from .models import *
 
 from django.views import View
 from django.views.generic.base import TemplateView
-from django.views.generic import ListView, FormView, CreateView
+from django.views.generic import ListView, FormView, CreateView, TemplateView
 from django.http import HttpResponseRedirect,HttpResponse,HttpResponseNotFound, JsonResponse
 
 from django.contrib import messages
@@ -32,19 +32,18 @@ def index(requset):
 
 
 
-
-class WordsFormView(View):
-
-    def get(self,request):
-
-        form_for_word = WordsFrom()
-
-
-        form_for_categorie = ModelCatsWordsForm()
-
-        return render(request,'app/appendwords.html',context={'form':form_for_word,'form_for_categorie':form_for_categorie})
-    def post(self,request):
-
+class WordsFormView(TemplateView):
+    template_name = 'app/appendwords.html'
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        wordsform = WordsFrom()
+        wordsform.fields['cat'].queryset = ModelCatsWords.objects.filter(author_id=self.request.user.id)
+        context['form'] =  wordsform
+        # context['form'] =  WordsFrom(instance=ModelWords.objects.get(author=self.request.user.id))
+        context['form_for_categorie'] = ModelCatsWordsForm()
+        print(WordsFrom().fields)
+        return context
+    def post(self, request):
         if self.request.POST.get('form-type') == 'form_for_word':
             form_for_word = WordsFrom(request.POST)
             if form_for_word.is_valid():
@@ -52,9 +51,9 @@ class WordsFormView(View):
                 # word_form.author = User.objects.get(user=request.user.username)
                 word_form.author = User.objects.get(username=request.user.username)
                 word_form.save()
-                messages.info(request, "Слово создано!",fail_silently=True)
+                messages.info(request, "Слово создано!", fail_silently=True)
                 return HttpResponseRedirect('appendwords')
-            return render(request,'app/appendwords.html',context={'form':form_for_word})
+            return render(request, 'app/appendwords.html', context={'form': form_for_word})
         elif self.request.POST.get('form-type') == 'form_for_categorie':
             form_for_categorie = ModelCatsWordsForm(request.POST)
             if form_for_categorie.is_valid():
@@ -65,6 +64,40 @@ class WordsFormView(View):
                 messages.info(request, "Категория создана!", fail_silently=True)
                 return HttpResponseRedirect('appendwords')
             return render(request, 'app/appendwords.html', context={'form_for_categorie': form_for_categorie})
+
+
+# class WordsFormView(View):
+#
+#     def get(self,request):
+#
+#         form_for_word = WordsFrom(cat=ModelCatsWords.objects.filter(author=request.user.id))
+#
+#
+#         form_for_categorie = ModelCatsWordsForm()
+#
+#         return render(request,'app/appendwords.html',context={'form':form_for_word,'form_for_categorie':form_for_categorie})
+#     def post(self,request):
+#
+#         if self.request.POST.get('form-type') == 'form_for_word':
+#             form_for_word = WordsFrom(request.POST)
+#             if form_for_word.is_valid():
+#                 word_form = form_for_word.save(commit=False)
+#                 # word_form.author = User.objects.get(user=request.user.username)
+#                 word_form.author = User.objects.get(username=request.user.username)
+#                 word_form.save()
+#                 messages.info(request, "Слово создано!",fail_silently=True)
+#                 return HttpResponseRedirect('appendwords')
+#             return render(request,'app/appendwords.html',context={'form':form_for_word})
+#         elif self.request.POST.get('form-type') == 'form_for_categorie':
+#             form_for_categorie = ModelCatsWordsForm(request.POST)
+#             if form_for_categorie.is_valid():
+#                 word_form = form_for_categorie.save(commit=False)
+#                 # word_form.author = User.objects.get(user=request.user.username)
+#                 word_form.author = User.objects.get(username=request.user.username)
+#                 word_form.save()
+#                 messages.info(request, "Категория создана!", fail_silently=True)
+#                 return HttpResponseRedirect('appendwords')
+#             return render(request, 'app/appendwords.html', context={'form_for_categorie': form_for_categorie})
 
 
 def check_eng_words(request):
