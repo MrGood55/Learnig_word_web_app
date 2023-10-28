@@ -2,12 +2,9 @@ import csv
 
 from django.shortcuts import render,redirect
 
-
 from .forms import *
 from .models import *
 
-from django.views import View
-from django.views.generic.base import TemplateView
 from django.views.generic import ListView, FormView, CreateView, TemplateView
 from django.http import HttpResponseRedirect,HttpResponse,HttpResponseNotFound, JsonResponse
 
@@ -17,13 +14,12 @@ import random
 ## For import/export
 from tablib import Dataset
 import json
-from openpyxl import Workbook
-
+# from openpyxl import Workbook
+import openpyxl
 ## For users
 from django.contrib.auth import logout, login
 from django.contrib.auth.views import LoginView
 from django.urls import reverse_lazy
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 ### Create your views here.
 
@@ -70,38 +66,7 @@ class WordsFormView(TemplateView):
             return render(request, 'app/appendwords.html', context={'form_for_categorie': form_for_categorie})
 
 
-# class WordsFormView(View):
-#
-#     def get(self,request):
-#
-#         form_for_word = WordsFrom(cat=ModelCatsWords.objects.filter(author=request.user.id))
-#
-#
-#         form_for_categorie = ModelCatsWordsForm()
-#
-#         return render(request,'app/appendwords.html',context={'form':form_for_word,'form_for_categorie':form_for_categorie})
-#     def post(self,request):
-#
-#         if self.request.POST.get('form-type') == 'form_for_word':
-#             form_for_word = WordsFrom(request.POST)
-#             if form_for_word.is_valid():
-#                 word_form = form_for_word.save(commit=False)
-#                 # word_form.author = User.objects.get(user=request.user.username)
-#                 word_form.author = User.objects.get(username=request.user.username)
-#                 word_form.save()
-#                 messages.info(request, "Слово создано!",fail_silently=True)
-#                 return HttpResponseRedirect('appendwords')
-#             return render(request,'app/appendwords.html',context={'form':form_for_word})
-#         elif self.request.POST.get('form-type') == 'form_for_categorie':
-#             form_for_categorie = ModelCatsWordsForm(request.POST)
-#             if form_for_categorie.is_valid():
-#                 word_form = form_for_categorie.save(commit=False)
-#                 # word_form.author = User.objects.get(user=request.user.username)
-#                 word_form.author = User.objects.get(username=request.user.username)
-#                 word_form.save()
-#                 messages.info(request, "Категория создана!", fail_silently=True)
-#                 return HttpResponseRedirect('appendwords')
-#             return render(request, 'app/appendwords.html', context={'form_for_categorie': form_for_categorie})
+
 
 
 def check_eng_words(request):
@@ -170,7 +135,7 @@ class ListWordsCategory(ListView):
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['title'] = 'Категория - ' + str(context['list_of_words'][0].cat)
+        # context['title'] = 'Категория - ' + str(context['list_of_words'][0].cat)
         context['cat_selected'] = context['list_of_words'][0].cat_id
         context['cats']  = ModelCatsWords.objects.all()
         return context
@@ -196,7 +161,7 @@ def simple_export(request):
         response = HttpResponse(content_type=f'{format}')
         response['Content-Disposition'] = 'attachment; filename="products.xlsx"'
 
-        wb = Workbook()
+        wb = openpyxl.Workbook()
         ws = wb.active
         ws.title = "Words"
 
@@ -227,36 +192,59 @@ def simple_export(request):
 def simple_upload(request):
     try:
         if request.method == 'POST':
-            dataset = Dataset()
             new_modelwords = request.FILES['myfile']
-
             if not new_modelwords.name.endswith('xlsx'):
                 messages.error(request,'wrong format') # MESSAGE
                 return HttpResponse('wrong format') # DELETE IT
             else:
-                imported_data = dataset.load(new_modelwords.read(), format='xlsx', headers=False)
-                print('imported_data is ',imported_data)
-                for data in imported_data:
-                    # print(data[0],data[1])
+                book = openpyxl.load_workbook(new_modelwords)
+                sheet = book.active
+                ###1
+                cats_match_users = ModelCatsWords.objects.filter(author_id=request.user.id)
+                for data in sheet:
                     if len(data) == 2:
-                        print('data is ',data)
                         ModelWords.objects.create(
-                                rus_name = data[0],
-                                eng_name = data[1],
+                                rus_name = data[0].value,
+                                eng_name = data[1].value,
                                 author_id = request.user.id
                         )
                     elif len(data) == 3:
-                        ModelCatsWords.objects.create(name=data[2],author_id=request.user.id)
+                        # if  len(ModelCatsWords.objects.filter(name=data[2].value,author_id=request.user.id))==0:
+                        if  len(cats_match_users.filter(name=data[2].value))==0:
+                            ModelCatsWords.objects.create(name=data[2].value,author_id=request.user.id)
                         ModelWords.objects.create(
-                            rus_name=data[0],
-                            eng_name=data[1],
-                            cat_id = ModelCatsWords.objects.get(name=data[2]).id,
+                            rus_name=data[0].value,
+                            eng_name=data[1].value,
+                            # cat_id = ModelCatsWords.objects.get(name=data[2].value,author_id=request.user.id).id,
+                            cat_id = cats_match_users.get(name=data[2].value).id,
                             author_id=request.user.id
                         )
 
                 messages.success(request, 'Data is imported') # MESSAGE
+                ### 2
+    #             imported_data = dataset.load(new_modelwords.read(), format='xlsx', headers=False)
+    #             print('imported_data is ',imported_data)
+    #             for data in imported_data:
+    #                 # print(data[0],data[1])
+    #                 if len(data) == 2:
+    #                     print('data is ',data)
+    #                     ModelWords.objects.create(
+    #                             rus_name = data[0],
+    #                             eng_name = data[1],
+    #                             author_id = request.user.id
+    #                     )
+    #                 elif len(data) == 3:
+    #                     ModelCatsWords.objects.create(name=data[2],author_id=request.user.id)
+    #                     ModelWords.objects.create(
+    #                         rus_name=data[0],
+    #                         eng_name=data[1],
+    #                         cat_id = ModelCatsWords.objects.get(name=data[2]).id,
+    #                         author_id=request.user.id
+    #                     )
+    #
+    #             messages.success(request, 'Data is imported') # MESSAGE
     except Exception as E:
-        #     print(E)
+        print(E)
         messages.error(request, 'Error')  # MESSAGE
 
     return render(request, 'app/importform.html')
