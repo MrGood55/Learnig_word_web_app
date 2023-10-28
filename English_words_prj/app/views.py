@@ -37,11 +37,15 @@ class WordsFormView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         wordsform = WordsFrom()
-        wordsform.fields['cat'].queryset = ModelCatsWords.objects.filter(author_id=self.request.user.id)
+        if self.request.user.is_authenticated:
+            wordsform.fields['cat'].queryset = ModelCatsWords.objects.filter(author_id=self.request.user.id)
+        else:
+            MY_CHOICES = (
+                ('A', 'Категория'),
+            )
+            wordsform.fields['cat'].choices = MY_CHOICES
         context['form'] =  wordsform
-        # context['form'] =  WordsFrom(instance=ModelWords.objects.get(author=self.request.user.id))
         context['form_for_categorie'] = ModelCatsWordsForm()
-        print(WordsFrom().fields)
         return context
     def post(self, request):
         if self.request.POST.get('form-type') == 'form_for_word':
@@ -51,7 +55,7 @@ class WordsFormView(TemplateView):
                 # word_form.author = User.objects.get(user=request.user.username)
                 word_form.author = User.objects.get(username=request.user.username)
                 word_form.save()
-                messages.info(request, "Слово создано!", fail_silently=True)
+                messages.success(request, "Слово создано!", fail_silently=True)
                 return HttpResponseRedirect('appendwords')
             return render(request, 'app/appendwords.html', context={'form': form_for_word})
         elif self.request.POST.get('form-type') == 'form_for_categorie':
@@ -61,7 +65,7 @@ class WordsFormView(TemplateView):
                 # word_form.author = User.objects.get(user=request.user.username)
                 word_form.author = User.objects.get(username=request.user.username)
                 word_form.save()
-                messages.info(request, "Категория создана!", fail_silently=True)
+                messages.success(request, "Категория создана!", fail_silently=True)
                 return HttpResponseRedirect('appendwords')
             return render(request, 'app/appendwords.html', context={'form_for_categorie': form_for_categorie})
 
@@ -119,9 +123,11 @@ def check_eng_words(request):
             # print(words)
             # print(form.cleaned_data)
             if word['eng_name'] == form.cleaned_data['eng_name']:
-                messages.info(request, "True", fail_silently=True)
+                messages.success(request, "True", fail_silently=True)
+                return redirect('checkwords')
             else:
-                messages.info(request, "Wrong", fail_silently=True)
+                messages.error(request, "Your're answer is wrong", fail_silently=True)
+                return redirect('checkwords')
     else:
         form = CheckWordsFrom()
 
@@ -183,8 +189,8 @@ def pageNotFound(request, exception):
 
 
 def simple_export(request):
-    objs = ModelWords.objects.all()
-    # dataset = Dataset()
+    objs = ModelWords.objects.filter(author_id=request.user.id)
+
     format = request.POST.get('format')
     if format == 'xlsx':
         response = HttpResponse(content_type=f'{format}')
@@ -223,17 +229,31 @@ def simple_upload(request):
         if request.method == 'POST':
             dataset = Dataset()
             new_modelwords = request.FILES['myfile']
+
             if not new_modelwords.name.endswith('xlsx'):
                 messages.error(request,'wrong format') # MESSAGE
                 return HttpResponse('wrong format') # DELETE IT
             else:
-                imported_data = dataset.load(new_modelwords.read(), format='xlsx')
-                # print(imported_data)
+                imported_data = dataset.load(new_modelwords.read(), format='xlsx', headers=False)
+                print('imported_data is ',imported_data)
                 for data in imported_data:
-                    print(data[0],data[1])
-                    ModelWords.objects.create(
-                            rus_name = data[0],
-                            eng_name = data[1],)
+                    # print(data[0],data[1])
+                    if len(data) == 2:
+                        print('data is ',data)
+                        ModelWords.objects.create(
+                                rus_name = data[0],
+                                eng_name = data[1],
+                                author_id = request.user.id
+                        )
+                    elif len(data) == 3:
+                        ModelCatsWords.objects.create(name=data[2],author_id=request.user.id)
+                        ModelWords.objects.create(
+                            rus_name=data[0],
+                            eng_name=data[1],
+                            cat_id = ModelCatsWords.objects.get(name=data[2]).id,
+                            author_id=request.user.id
+                        )
+
                 messages.success(request, 'Data is imported') # MESSAGE
     except Exception as E:
         #     print(E)
